@@ -3,53 +3,10 @@
 #include "HepMC3/GenParticle.h"
 #include "HepMC3/GenVertex.h"
 
+#include "NuHepMC/Constants.hxx"
+#include "NuHepMC/WriterUtils.hxx"
+
 #include <utility>
-
-using namespace NuWroNuHepMC;
-
-// Lazy way of choosing the right attribute type via TMP
-template <typename T> struct attr_traits {};
-
-template <> struct attr_traits<int> {
-  typedef HepMC3::IntAttribute type;
-};
-
-template <> struct attr_traits<std::vector<int>> {
-  typedef HepMC3::VectorIntAttribute type;
-};
-
-template <> struct attr_traits<double> {
-  typedef HepMC3::DoubleAttribute type;
-};
-
-template <> struct attr_traits<std::vector<double>> {
-  typedef HepMC3::VectorDoubleAttribute type;
-};
-
-template <> struct attr_traits<std::string> {
-  typedef HepMC3::StringAttribute type;
-};
-
-template <size_t N> struct attr_traits<char[N]> {
-  typedef HepMC3::StringAttribute type;
-};
-
-template <> struct attr_traits<std::vector<std::string>> {
-  typedef HepMC3::VectorStringAttribute type;
-};
-
-template <typename T>
-void add_attribute(HepMC3::GenEvent &ge, std::string const &name,
-                   T const &val) {
-  ge.add_attribute(name, std::make_shared<typename attr_traits<T>::type>(val));
-}
-
-template <typename T>
-void add_attribute(std::shared_ptr<HepMC3::GenRunInfo> gri,
-                   std::string const &name, T const &val) {
-  gri->add_attribute(name,
-                     std::make_shared<typename attr_traits<T>::type>(val));
-}
 
 int GetEC1Channel(flags const &flag) {
   // primary vertex flags
@@ -97,9 +54,7 @@ BuildRunInfo(int nevents, double flux_averaged_total_cross_section,
   auto run_info = std::make_shared<HepMC3::GenRunInfo>();
 
   // G.R.2 NuHepMC Version
-  add_attribute(run_info, "NuHepMC.Version.Major", 0);
-  add_attribute(run_info, "NuHepMC.Version.Minor", 1);
-  add_attribute(run_info, "NuHepMC.Version.Patch", 0);
+  NuHepMC::GR2::WriteVersion(run_info);
 
   // G.R.3 Generator Identification
   run_info->tools().emplace_back(HepMC3::GenRunInfo::ToolInfo{
@@ -110,161 +65,83 @@ BuildRunInfo(int nevents, double flux_averaged_total_cross_section,
 
   // G.R.4 Process Metadata
   // E.C.1
-  std::vector<std::tuple<std::string, std::string, int>>
-      ChannelNameIndexModeMapping = {
-          {"CC coh", "coherent", 100},
-          {"NC coh", "coherent", 150},
+  NuHepMC::StatusCodeDescriptors ChannelNameIndexModeMapping = {
+      {100, {"CC coh", "coherent"}},
+      {150, {"NC coh", "coherent"}},
 
-          {"CC qel", "(quasi) elastic", 200},
-          {"NC qel", "(quasi) elastic", 250},
+      {200, {"CC qel", "(quasi) elastic"}},
+      {250, {"NC qel", "(quasi) elastic"}},
 
-          {"CC hyp", "hyperon production", 201},
-          {"NC hyp", "hyperon production", 251},
+      {201, {"CC hyp", "hyperon production"}},
+      {251, {"NC hyp", "hyperon production"}},
 
-          {"CC mec", "meson exhange current", 300},
-          {"NC mec", "meson exhange current", 350},
+      {300, {"CC mec", "meson exhange current"}},
+      {350, {"NC mec", "meson exhange current"}},
 
-          {"CC res", "delta resonant", 400},
-          {"NC res", "delta resonant", 450},
+      {400, {"CC res", "delta resonant"}},
+      {450, {"NC res", "delta resonant"}},
 
-          {"CC non-delta SPP", "non-delta single pion", 500},
-          {"NC non-delta SPP", "non-delta single pion", 550},
+      {500, {"CC non-delta SPP", "non-delta single pion"}},
+      {550, {"NC non-delta SPP", "non-delta single pion"}},
 
-          {"CC dis", "deep inelastic", 600},
-          {"NC dis", "deep inelastic", 650},
+      {600, {"CC dis", "deep inelastic"}},
+      {650, {"NC dis", "deep inelastic"}},
 
-          {"CC lep", "neutrino-lepton", 700},
-          {"NC lep", "neutrino-lepton", 750},
-      };
-  std::vector<int> pids;
-  for (auto const &pid : ChannelNameIndexModeMapping) {
-    pids.push_back(std::get<2>(pid));
-    add_attribute(run_info,
-                  "NuHepMC.ProcessInfo[" + std::to_string(std::get<2>(pid)) +
-                      "].Name",
-                  std::get<0>(pid));
-    add_attribute(run_info,
-                  "NuHepMC.ProcessInfo[" + std::to_string(std::get<2>(pid)) +
-                      "].Description",
-                  std::get<1>(pid));
-  }
+      {700, {"CC lep", "neutrino-lepton"}},
+      {750, {"NC lep", "neutrino-lepton"}},
+  };
+  NuHepMC::GR4::WriteProcessIDDefinitions(run_info,
+                                          ChannelNameIndexModeMapping);
 
-  add_attribute(run_info, "NuHepMC.ProcessIDs", pids);
+  NuHepMC::StatusCodeDescriptors VertexStatuses = {
+      {NuHepMC::VertexStatus::Primary,
+       {"PrimaryVertex", "The neutrino hard-scatter vertex"}},
+      {NuHepMC::VertexStatus::FSISummary,
+       {"FSIVertex", "A single vertex representing the cascade"}},
+      {NuHepMC::VertexStatus::NucleonSeparation,
+       {"NucleonSeparationVertex",
+        "Impulse approximation vertex that represents the separation of the "
+        "single target nucleon from the target nucleus ground state."}},
+  };
 
-  // G.R.5 Vertex Status Metadata
-  add_attribute(run_info,
-                "NuHepMC.VertexStatusInfo[" +
-                    std::to_string(VertexStatus::kPrimaryVertex) + "].Name",
-                "PrimaryVertex");
-  add_attribute(run_info,
-                "NuHepMC.VertexStatusInfo[" +
-                    std::to_string(VertexStatus::kPrimaryVertex) +
-                    "].Description",
-                "The neutrino hard-scatter vertex");
-  add_attribute(run_info,
-                "NuHepMC.VertexStatusInfo[" +
-                    std::to_string(VertexStatus::kFSIVertex) + "].Name",
-                "FSIVertex");
-  add_attribute(run_info,
-                "NuHepMC.VertexStatusInfo[" +
-                    std::to_string(VertexStatus::kFSIVertex) + "].Description",
-                "A single vertex representing the cascade");
+  NuHepMC::GR5::WriteVertexStatusIDDefinitions(run_info, VertexStatuses);
 
-  add_attribute(
-      run_info, "NuHepMC.VertexStatusIDs",
-      std::vector<int>{VertexStatus::kPrimaryVertex, VertexStatus::kFSIVertex});
-
-  // G.R.6 Particle Status Metadata
-  add_attribute(run_info,
-                "NuHepMC.ParticleStatusInfo[" +
-                    std::to_string(ParticleStatus::kUndecayedPhysicalParticle) +
-                    "].Name",
-                "UndecayedPhysicalParticle");
-  add_attribute(run_info,
-                "NuHepMC.ParticleStatusInfo[" +
-                    std::to_string(ParticleStatus::kUndecayedPhysicalParticle) +
-                    "].Description",
-                "Physical final state particles produced by this simulation");
-
-  add_attribute(run_info,
-                "NuHepMC.ParticleStatusInfo[" +
-                    std::to_string(ParticleStatus::kDecayedParticle) + "].Name",
-                "DecayedParticle");
-  add_attribute(run_info,
-                "NuHepMC.ParticleStatusInfo[" +
-                    std::to_string(ParticleStatus::kDecayedParticle) +
-                    "].Description",
-                "Particle was decayed by the simulation");
-  add_attribute(run_info,
-                "NuHepMC.ParticleStatusInfo[" +
-                    std::to_string(ParticleStatus::kDocumentationLine) +
-                    "].Name",
-                "DocumentationLine");
-  add_attribute(run_info,
-                "NuHepMC.ParticleStatusInfo[" +
-                    std::to_string(ParticleStatus::kDocumentationLine) +
-                    "].Description",
-                "Documentation line, not considered a real particle");
-  add_attribute(run_info,
-                "NuHepMC.ParticleStatusInfo[" +
-                    std::to_string(ParticleStatus::kIncomingBeamParticle) +
-                    "].Name",
-                "IncomingBeamParticle");
-  add_attribute(run_info,
-                "NuHepMC.ParticleStatusInfo[" +
-                    std::to_string(ParticleStatus::kIncomingBeamParticle) +
-                    "].Description",
-                "Incoming beam particle");
-  add_attribute(run_info,
-                "NuHepMC.ParticleStatusInfo[" +
-                    std::to_string(ParticleStatus::kTargetParticle) + "].Name",
-                "TargetParticle");
-  add_attribute(run_info,
-                "NuHepMC.ParticleStatusInfo[" +
-                    std::to_string(ParticleStatus::kTargetParticle) +
-                    "].Description",
-                "The target particle in the hard scatter");
-
-  add_attribute(run_info,
-                "NuHepMC.ParticleStatusInfo[" +
-                    std::to_string(ParticleStatus::kStruckNucleon) + "].Name",
-                "StruckNucleon");
-  add_attribute(run_info,
-                "NuHepMC.ParticleStatusInfo[" +
-                    std::to_string(ParticleStatus::kStruckNucleon) +
-                    "].Description",
-                "The nucleon involved in the hard scatter");
-
-  add_attribute(run_info, "NuHepMC.ParticleStatusIDs",
-                std::vector<int>{
-                    ParticleStatus::kUndecayedPhysicalParticle,
-                    ParticleStatus::kDecayedParticle,
-                    ParticleStatus::kDocumentationLine,
-                    ParticleStatus::kIncomingBeamParticle,
-                    ParticleStatus::kTargetParticle,
-                    ParticleStatus::kStruckNucleon,
-                });
+  NuHepMC::StatusCodeDescriptors ParticleStatuses = {
+      {NuHepMC::ParticleStatus::UndecayedPhysical,
+       {"UndecayedPhysicalParticle",
+        "Physical final state particles produced by this simulation"}},
+      {NuHepMC::ParticleStatus::DecayedPhysical,
+       {"DecayedPhysical", "Particle was decayed by the simulation"}},
+      {NuHepMC::ParticleStatus::DocumentationLine,
+       {"DocumentationLine",
+        "Documentation line, not considered a real particle"}},
+      {NuHepMC::ParticleStatus::IncomingBeam,
+       {"IncomingBeamParticle", "Incoming beam particle"}},
+      {NuHepMC::ParticleStatus::Target,
+       {"TargetParticle", "The target particle in the hard scatter"}},
+      {NuHepMC::ParticleStatus::StruckNucleon,
+       {"StruckNucleon", "The nucleon involved in the hard scatter"}},
+  };
 
   // G.R.7 Event Weights
-  run_info->set_weight_names({
-      "CV",
-  });
+  NuHepMC::GR7::SetWeightNames(run_info, {
+                                             "CV",
+                                         });
 
   // G.C.1 Signalling Followed Conventions
-  add_attribute(run_info, "NuHepMC.Conventions",
-                std::vector<std::string>{
-                    "G.C.1",
-                    "G.C.2",
-                    "G.C.4"
-                    "E.C.1",
-                });
+  NuHepMC::GC1::SetConventions(run_info, {
+                                             "G.C.1",
+                                             "G.C.2",
+                                             "G.C.4",
+                                             "E.C.1",
+                                         });
 
   // G.C.2 File Exposure (Standalone)
-  add_attribute(run_info, "NuHepMC.Exposure.NEvents", nevents);
+  NuHepMC::GC2::SetExposureNEvents(run_info, nevents);
 
   // G.C.4 Flux-averaged Total Cross Section
-  add_attribute(run_info, "NuHepMC.FluxAveragedTotalCrossSection",
-                flux_averaged_total_cross_section);
+  NuHepMC::GC4::SetFluxAveragedTotalXSec(run_info,
+                                         flux_averaged_total_cross_section);
 
   return run_info;
 }
@@ -276,19 +153,19 @@ HepMC3::GenEvent ToGenEvent(event &ev,
   std::cout << ">>>>>>>>>>>>>>>" << std::endl;
 #endif
 
-  HepMC3::GenEvent evt(HepMC3::Units::GEV, HepMC3::Units::CM);
+  HepMC3::GenEvent evt(HepMC3::Units::MEV, HepMC3::Units::CM);
   evt.set_run_info(gri);
 
   HepMC3::GenVertexPtr IAVertex =
       std::make_shared<HepMC3::GenVertex>(HepMC3::FourVector{});
-  IAVertex->set_status(VertexStatus::kNuclearTargetVertex);
+  IAVertex->set_status(NuHepMC::VertexStatus::NucleonSeparation);
 
   int nuclear_PDG = 1000000000 + ev.par.nucleus_p * 10000 +
                     (ev.par.nucleus_p + ev.par.nucleus_n) * 10;
 
   HepMC3::GenParticlePtr target_nucleus = std::make_shared<HepMC3::GenParticle>(
       HepMC3::FourVector{0, 0, 0, 0}, nuclear_PDG,
-      ParticleStatus::kTargetParticle);
+      NuHepMC::ParticleStatus::Target);
 
 #ifdef NUWROCONV_DEBUG
   std::cout << "        kTargetParticle: " << nuclear_PDG << std::endl;
@@ -301,7 +178,7 @@ HepMC3::GenEvent ToGenEvent(event &ev,
   HepMC3::GenParticlePtr residual_nucleus =
       std::make_shared<HepMC3::GenParticle>(
           HepMC3::FourVector{0, 0, 0, 0}, res_nuclear_PDG,
-          ParticleStatus::kUndecayedPhysicalParticle);
+          NuHepMC::ParticleStatus::UndecayedPhysical);
 
 #ifdef NUWROCONV_DEBUG
   std::cout << "      kPhysicalParticle: " << res_nuclear_PDG << std::endl;
@@ -312,11 +189,11 @@ HepMC3::GenEvent ToGenEvent(event &ev,
   // E.R.5
   HepMC3::GenVertexPtr primvertex =
       std::make_shared<HepMC3::GenVertex>(HepMC3::FourVector{});
-  primvertex->set_status(VertexStatus::kPrimaryVertex);
+  primvertex->set_status(NuHepMC::VertexStatus::Primary);
 
   HepMC3::GenVertexPtr fsivertex =
       std::make_shared<HepMC3::GenVertex>(HepMC3::FourVector{});
-  fsivertex->set_status(VertexStatus::kFSIVertex);
+  fsivertex->set_status(NuHepMC::VertexStatus::FSISummary);
 
   for (auto &p : ev.in) {
 
@@ -324,7 +201,7 @@ HepMC3::GenEvent ToGenEvent(event &ev,
 
       HepMC3::GenParticlePtr part = std::make_shared<HepMC3::GenParticle>(
           HepMC3::FourVector{p.p4().x, p.p4().y, p.p4().z, p.p4().t}, p.pdg,
-          ParticleStatus::kIncomingBeamParticle);
+          NuHepMC::ParticleStatus::IncomingBeam);
       part->set_generated_mass(p.mass());
 
 #ifdef NUWROCONV_DEBUG
@@ -337,7 +214,7 @@ HepMC3::GenEvent ToGenEvent(event &ev,
     } else { // incoming target nucleon
       HepMC3::GenParticlePtr part = std::make_shared<HepMC3::GenParticle>(
           HepMC3::FourVector{p.p4().x, p.p4().y, p.p4().z, p.p4().t}, p.pdg,
-          ParticleStatus::kStruckNucleon);
+          NuHepMC::ParticleStatus::StruckNucleon);
       part->set_generated_mass(p.mass());
 
 #ifdef NUWROCONV_DEBUG
@@ -355,7 +232,7 @@ HepMC3::GenEvent ToGenEvent(event &ev,
                  // and push them through the FSI vertext
     HepMC3::GenParticlePtr part = std::make_shared<HepMC3::GenParticle>(
         HepMC3::FourVector{p.p4().x, p.p4().y, p.p4().z, p.p4().t}, p.pdg,
-        ParticleStatus::kDocumentationLine);
+        NuHepMC::ParticleStatus::DocumentationLine);
     part->set_generated_mass(p.mass());
 
 #ifdef NUWROCONV_DEBUG
@@ -370,7 +247,7 @@ HepMC3::GenEvent ToGenEvent(event &ev,
   for (auto &p : ev.post) { // final state real particles
     HepMC3::GenParticlePtr part = std::make_shared<HepMC3::GenParticle>(
         HepMC3::FourVector{p.p4().x, p.p4().y, p.p4().z, p.p4().t}, p.pdg,
-        ParticleStatus::kUndecayedPhysicalParticle);
+        NuHepMC::ParticleStatus::UndecayedPhysical);
     part->set_generated_mass(p.mass());
 
 #ifdef NUWROCONV_DEBUG
@@ -389,9 +266,9 @@ HepMC3::GenEvent ToGenEvent(event &ev,
   evt.weight("CV") = 1;
 
   // E.R.4
-  add_attribute(evt, "LabPos", std::vector<double>{0, 0, 0, 0});
+  NuHepMC::add_attribute(evt, "LabPos", std::vector<double>{0, 0, 0, 0});
 
-  add_attribute(evt, "ProcId", GetEC1Channel(ev.flag));
+  NuHepMC::add_attribute(evt, "ProcId", GetEC1Channel(ev.flag));
 
 #ifdef NUWROCONV_DEBUG
   std::cout << "      ProcId: " << GetEC1Channel(ev.flag) << std::endl;

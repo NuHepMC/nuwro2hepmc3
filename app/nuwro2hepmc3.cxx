@@ -4,19 +4,12 @@
 
 #include "nuwroconv.h"
 
-#include "HepMC3/WriterAscii.h"
-#ifdef HEPMC3_USE_COMPRESSION
-#include "HepMC3/WriterGZ.h"
-#endif
+#include "NuHepMC/WriterUtils.hxx"
 
 #include <iostream>
 
 std::vector<std::string> files_to_read;
 std::string file_to_write;
-
-#ifdef HEPMC3_USE_COMPRESSION
-bool WriteGZ = false;
-#endif
 
 Long64_t nmaxevents = std::numeric_limits<Long64_t>::max();
 
@@ -25,10 +18,7 @@ void SayUsage(char const *argv[]) {
       << "[USAGE]: " << argv[0] << "\n"
       << "\t-i <events.root> [nv2.root ...]  : nuwro event file to read\n"
       << "\t-N <NMax>                        : Process at most <NMax> events\n"
-      << "\t-o <neut.hepmc3>                 : hepmc3 file to write\n"
-#ifdef HEPMC3_USE_COMPRESSION
-      << "\t-z                               : write out in compressed ASCII\n"
-#endif
+      << "\t-o <nuwro.hepmc3>                : hepmc3 file to write\n"
       << std::endl;
 }
 
@@ -38,10 +28,6 @@ void handleOpts(int argc, char const *argv[]) {
     if (std::string(argv[opt]) == "-?" || std::string(argv[opt]) == "--help") {
       SayUsage(argv);
       exit(0);
-    } else if (std::string(argv[opt]) == "-z") {
-      WriteGZ = true;
-      std::cout << "[INFO]: Writing output compressed output file."
-                << std::endl;
     } else if ((opt + 1) < argc) {
       if (std::string(argv[opt]) == "-i") {
         while (((opt + 1) < argc) && (argv[opt + 1][0] != '-')) {
@@ -74,14 +60,6 @@ int main(int argc, char const *argv[]) {
     return 1;
   }
 
-#ifdef HEPMC3_USE_COMPRESSION
-  if (WriteGZ && (file_to_write.substr(file_to_write.size() - 4, 3) !=
-                  std::string(".gz"))) {
-    file_to_write = file_to_write + ".gz";
-  }
-  std::cout << "[INFO]: Writing to " << file_to_write << std::endl;
-#endif
-
   TChain chin("treeout");
 
   for (auto const &ftr : files_to_read) {
@@ -100,20 +78,14 @@ int main(int argc, char const *argv[]) {
   auto branch_status = chin.SetBranchAddress("e", &ev);
 
   Long64_t ents_to_run = std::min(ents, nmaxevents);
+  Long64_t shout_every = std::min(10000LL, ents_to_run / 10);
 
-  //Trust that the first entry has the right weight.
+  // Trust that the first entry has the right weight.
   double fatx = ev->weight / double(ents_to_run);
 
   auto gri = BuildRunInfo(ents_to_run, fatx, ev->par);
-  HepMC3::Writer *output =
-#ifdef HEPMC3_USE_COMPRESSION
-      WriteGZ ? static_cast<HepMC3::Writer *>(
-                    new HepMC3::WriterGZ<HepMC3::WriterAscii>(
-                        file_to_write.c_str(), gri))
-              :
-#endif
-              static_cast<HepMC3::Writer *>(
-                  new HepMC3::WriterAscii(file_to_write.c_str(), gri));
+  std::unique_ptr<HepMC3::Writer> output(
+      NuHepMC::Writer::make_writer(file_to_write, gri));
 
   chin.GetEntry(0);
 
@@ -123,7 +95,7 @@ int main(int argc, char const *argv[]) {
 
   for (Long64_t i = 0; i < ents_to_run; ++i) {
     chin.GetEntry(i);
-    if (i && (ents_to_run / 100) && !(i % (ents_to_run / 100))) {
+    if (i && shout_every && !(i % shout_every)) {
       std::cout << "\rConverting " << i << "/" << ents_to_run << std::flush;
     }
     output->write_event(ToGenEvent(*ev, gri));

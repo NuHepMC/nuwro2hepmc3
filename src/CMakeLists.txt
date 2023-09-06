@@ -15,7 +15,7 @@ set_target_properties(NuWroEvent_lib PROPERTIES
 
 add_library(nuwroconv SHARED nuwroconv.cxx)
 
-target_link_libraries(nuwroconv PUBLIC NuWroEvent_lib HepMC3::All ROOT::Tree ROOT::RIO)
+target_link_libraries(nuwroconv PUBLIC NuWroEvent_lib NuHepMC::CPPUtils ROOT::Tree ROOT::RIO)
 target_include_directories(nuwroconv PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${NuWro_SOURCE_DIR}/src>)
