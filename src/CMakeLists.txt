@@ -3,7 +3,7 @@ ROOT_GENERATE_DICTIONARY(NuWroEvent
             LINKDEF ${NuWro_SOURCE_DIR}/src/event1LinkDef.h
             OPTIONS -p)
 
-add_library(NuWroEvent_lib SHARED NuWroEvent.cxx ${NuWro_SOURCE_DIR}/src/event1.cc)
+add_library(NuWroEvent_lib STATIC NuWroEvent.cxx ${NuWro_SOURCE_DIR}/src/event1.cc)
 
 target_link_libraries(NuWroEvent_lib PRIVATE ROOT::RIO)
 target_include_directories(NuWroEvent_lib PRIVATE 
@@ -13,9 +13,9 @@ target_include_directories(NuWroEvent_lib PRIVATE
 set_target_properties(NuWroEvent_lib PROPERTIES 
   LIBRARY_OUTPUT_NAME "NuWroEvent")
 
-add_library(nuwroconv SHARED nuwroconv.cxx)
+add_library(nuwroconv STATIC nuwroconv.cxx)
 
-target_link_libraries(nuwroconv PUBLIC NuWroEvent_lib NuHepMC::CPPUtils ROOT::Tree ROOT::RIO)
+target_link_libraries(nuwroconv PUBLIC NuWroEvent_lib NuHepMC::CPPUtils_static ROOT::Tree ROOT::RIO)
 target_include_directories(nuwroconv PUBLIC 
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${NuWro_SOURCE_DIR}/src>)
@@ -31,11 +31,11 @@ target_compile_definitions(nuwroconv PRIVATE
 set_target_properties(nuwroconv PROPERTIES 
   PUBLIC_HEADER nuwroconv.h)
 
-
+#If we build static then these are expected to be next to the binary
 install(FILES 
     ${CMAKE_CURRENT_BINARY_DIR}/libNuWroEvent.rootmap 
     ${CMAKE_CURRENT_BINARY_DIR}/libNuWroEvent_rdict.pcm 
-  DESTINATION lib)
+  DESTINATION bin)
 
 install(TARGETS nuwroconv NuWroEvent_lib
     EXPORT nuwroconv-targets

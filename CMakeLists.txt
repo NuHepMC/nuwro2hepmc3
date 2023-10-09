@@ -15,9 +15,11 @@ include(CPM)
 
 CPMAddPackage(
     NAME NuHepMC_CPPUtils
-    VERSION 0.1.0
+    VERSION 0.9.0
     GIT_REPOSITORY "https://github.com/NuHepMC/cpputils.git"
+    GIT_TAG main
     OPTIONS "BUILTIN_HEPMC3 ON"
+            "NuHepMC_BUILD_STATIC_LIBS ON"
 )
 
 CPMAddPackage(
@@ -27,8 +29,6 @@ CPMAddPackage(
     GIT_TAG nuwro_21.09.2
     DOWNLOAD_ONLY ON
 )
-
-find_package(ZLIB)
 
 add_subdirectory(src)
 add_subdirectory(app)

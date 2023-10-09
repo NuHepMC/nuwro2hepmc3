@@ -4,7 +4,7 @@
 
 #include "nuwroconv.h"
 
-#include "NuHepMC/WriterUtils.hxx"
+#include "NuHepMC/make_writer.hxx"
 
 #include <iostream>
 
@@ -77,17 +77,17 @@ int main(int argc, char const *argv[]) {
   event *ev = nullptr;
   auto branch_status = chin.SetBranchAddress("e", &ev);
 
+  chin.GetEntry(0);
+
   Long64_t ents_to_run = std::min(ents, nmaxevents);
   Long64_t shout_every = std::min(10000LL, ents_to_run / 10);
 
   // Trust that the first entry has the right weight.
-  double fatx = ev->weight / double(ents_to_run);
+  double fatx = ev->weight;
 
   auto gri = BuildRunInfo(ents_to_run, fatx, ev->par);
   std::unique_ptr<HepMC3::Writer> output(
       NuHepMC::Writer::make_writer(file_to_write, gri));
-
-  chin.GetEntry(0);
 
   if (output->failed()) {
     return 2;
@@ -98,7 +98,8 @@ int main(int argc, char const *argv[]) {
     if (i && shout_every && !(i % shout_every)) {
       std::cout << "\rConverting " << i << "/" << ents_to_run << std::flush;
     }
-    output->write_event(ToGenEvent(*ev, gri));
+    auto hepev = ToGenEvent(*ev, gri);
+    output->write_event(hepev);
   }
   std::cout << "\rConverting " << ents_to_run << "/" << ents_to_run
             << std::endl;

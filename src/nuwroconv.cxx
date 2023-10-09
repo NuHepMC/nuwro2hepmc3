@@ -122,6 +122,7 @@ BuildRunInfo(int nevents, double flux_averaged_total_cross_section,
       {NuHepMC::ParticleStatus::StruckNucleon,
        {"StruckNucleon", "The nucleon involved in the hard scatter"}},
   };
+  NuHepMC::GR6::WriteParticleStatusIDDefinitions(run_info, ParticleStatuses);
 
   // G.R.7 Event Weights
   NuHepMC::GR7::SetWeightNames(run_info, {
@@ -132,6 +133,7 @@ BuildRunInfo(int nevents, double flux_averaged_total_cross_section,
   NuHepMC::GC1::SetConventions(run_info, {
                                              "G.C.1",
                                              "G.C.2",
+                                             "G.C.5",
                                              "G.C.4",
                                              "E.C.1",
                                          });
@@ -139,8 +141,10 @@ BuildRunInfo(int nevents, double flux_averaged_total_cross_section,
   // G.C.2 File Exposure (Standalone)
   NuHepMC::GC2::SetExposureNEvents(run_info, nevents);
 
-  // G.C.4 Flux-averaged Total Cross Section
-  NuHepMC::GC4::SetFluxAveragedTotalXSec(run_info,
+  NuHepMC::GC4::SetCrossSectionUnits(run_info, "pb", "PerTargetNucleon");
+
+  // G.C.5 Flux-averaged Total Cross Section
+  NuHepMC::GC5::SetFluxAveragedTotalXSec(run_info,
                                          flux_averaged_total_cross_section);
 
   return run_info;
@@ -175,16 +179,23 @@ HepMC3::GenEvent ToGenEvent(event &ev,
 
   int res_nuclear_PDG = 1000000000 + ev.pr * 10000 + (ev.pr + ev.nr) * 10;
 
-  HepMC3::GenParticlePtr residual_nucleus =
+  HepMC3::GenParticlePtr residual_nucleus_internal =
       std::make_shared<HepMC3::GenParticle>(
-          HepMC3::FourVector{0, 0, 0, 0}, res_nuclear_PDG,
+          HepMC3::FourVector{0, 0, 0, 0}, 
+          NuHepMC::ParticleNumber::NuclearRemnant,
+          NuHepMC::ParticleStatus::DocumentationLine);
+
+  HepMC3::GenParticlePtr residual_nucleus_external =
+      std::make_shared<HepMC3::GenParticle>(
+          HepMC3::FourVector{0, 0, 0, 0}, 
+          NuHepMC::ParticleNumber::NuclearRemnant,
           NuHepMC::ParticleStatus::UndecayedPhysical);
 
 #ifdef NUWROCONV_DEBUG
-  std::cout << "      kPhysicalParticle: " << res_nuclear_PDG << std::endl;
+  std::cout << "      kDocumentationLine: " << NuHepMC::ParticleNumber::NuclearRemnant << std::endl;
 #endif
 
-  IAVertex->add_particle_out(residual_nucleus);
+  IAVertex->add_particle_out(residual_nucleus_internal);
 
   // E.R.5
   HepMC3::GenVertexPtr primvertex =
@@ -194,6 +205,8 @@ HepMC3::GenEvent ToGenEvent(event &ev,
   HepMC3::GenVertexPtr fsivertex =
       std::make_shared<HepMC3::GenVertex>(HepMC3::FourVector{});
   fsivertex->set_status(NuHepMC::VertexStatus::FSISummary);
+  fsivertex->add_particle_in(residual_nucleus_internal);
+  fsivertex->add_particle_out(residual_nucleus_external);
 
   for (auto &p : ev.in) {
 
@@ -262,13 +275,17 @@ HepMC3::GenEvent ToGenEvent(event &ev,
   evt.add_vertex(primvertex);
   evt.add_vertex(fsivertex);
 
+  NuHepMC::PC2::SetRemnantParticleNumber(residual_nucleus_internal,
+                                         res_nuclear_PDG);
+
   // E.C.1
   evt.weight("CV") = 1;
 
-  // E.R.4
-  NuHepMC::add_attribute(evt, "LabPos", std::vector<double>{0, 0, 0, 0});
+  // E.R.3
+  NuHepMC::ER3::SetProcessID(evt, GetEC1Channel(ev.flag));
 
-  NuHepMC::add_attribute(evt, "ProcId", GetEC1Channel(ev.flag));
+  // E.R.5
+  NuHepMC::ER5::SetLabPosition(evt, std::vector<double>{0, 0, 0, 0});
 
 #ifdef NUWROCONV_DEBUG
   std::cout << "      ProcId: " << GetEC1Channel(ev.flag) << std::endl;
