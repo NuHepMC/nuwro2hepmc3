@@ -5,6 +5,7 @@
 
 #include "NuHepMC/Constants.hxx"
 #include "NuHepMC/WriterUtils.hxx"
+#include "NuHepMC/UnitsUtils.hxx"
 
 #include <utility>
 
@@ -145,7 +146,8 @@ BuildRunInfo(int nevents, double flux_averaged_total_cross_section,
 
   // G.C.5 Flux-averaged Total Cross Section
   NuHepMC::GC5::SetFluxAveragedTotalXSec(run_info,
-                                         flux_averaged_total_cross_section);
+                                         flux_averaged_total_cross_section *
+                                             NuHepMC::CrossSection::Units::cm2);
 
   return run_info;
 }
@@ -181,18 +183,19 @@ HepMC3::GenEvent ToGenEvent(event &ev,
 
   HepMC3::GenParticlePtr residual_nucleus_internal =
       std::make_shared<HepMC3::GenParticle>(
-          HepMC3::FourVector{0, 0, 0, 0}, 
+          HepMC3::FourVector{0, 0, 0, 0},
           NuHepMC::ParticleNumber::NuclearRemnant,
           NuHepMC::ParticleStatus::DocumentationLine);
 
   HepMC3::GenParticlePtr residual_nucleus_external =
       std::make_shared<HepMC3::GenParticle>(
-          HepMC3::FourVector{0, 0, 0, 0}, 
+          HepMC3::FourVector{0, 0, 0, 0},
           NuHepMC::ParticleNumber::NuclearRemnant,
           NuHepMC::ParticleStatus::UndecayedPhysical);
 
 #ifdef NUWROCONV_DEBUG
-  std::cout << "      kDocumentationLine: " << NuHepMC::ParticleNumber::NuclearRemnant << std::endl;
+  std::cout << "      kDocumentationLine: "
+            << NuHepMC::ParticleNumber::NuclearRemnant << std::endl;
 #endif
 
   IAVertex->add_particle_out(residual_nucleus_internal);

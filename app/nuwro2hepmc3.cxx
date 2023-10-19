@@ -99,6 +99,7 @@ int main(int argc, char const *argv[]) {
       std::cout << "\rConverting " << i << "/" << ents_to_run << std::flush;
     }
     auto hepev = ToGenEvent(*ev, gri);
+    hepev.set_event_number(i);
     output->write_event(hepev);
   }
   std::cout << "\rConverting " << ents_to_run << "/" << ents_to_run
