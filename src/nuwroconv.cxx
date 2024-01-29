@@ -4,8 +4,10 @@
 #include "HepMC3/GenVertex.h"
 
 #include "NuHepMC/Constants.hxx"
-#include "NuHepMC/WriterUtils.hxx"
 #include "NuHepMC/UnitsUtils.hxx"
+#include "NuHepMC/WriterUtils.hxx"
+
+#include "params_all.h"
 
 #include <utility>
 
@@ -45,6 +47,19 @@ int GetEC1Channel(flags const &flag) {
     return 700 + nc;
   }
   return 0;
+}
+
+void AddParamInfo(std::shared_ptr<HepMC3::GenRunInfo> gri, params const &par) {
+  std::stringstream ss;
+#define PARAM(type, name, default_value)                                       \
+  ss.str("");                                                                  \
+  write(par.name, ss);                                                         \
+  NuHepMC::add_attribute(                                                      \
+      gri, std::string("NuHepMC.Provenance.NuWro.") + #name, ss.str());
+  PARAMS_ALL()
+#undef PARAM
+  NuHepMC::add_attribute(gri, "NuHepMC.Provenance.NuWro.path_to_data",
+                         par.path_to_data);
 }
 
 std::shared_ptr<HepMC3::GenRunInfo>
@@ -149,6 +164,7 @@ BuildRunInfo(int nevents, double flux_averaged_total_cross_section,
                                          flux_averaged_total_cross_section *
                                              NuHepMC::CrossSection::Units::cm2);
 
+  AddParamInfo(run_info, par);
   return run_info;
 }
 

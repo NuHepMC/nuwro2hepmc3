@@ -3,22 +3,13 @@ ROOT_GENERATE_DICTIONARY(NuWroEvent
             LINKDEF ${NuWro_SOURCE_DIR}/src/event1LinkDef.h
             OPTIONS -p)
 
-add_library(NuWroEvent_lib STATIC NuWroEvent.cxx ${NuWro_SOURCE_DIR}/src/event1.cc)
+add_library(nuwroconv SHARED nuwroconv.cxx NuWroEvent.cxx ${NuWro_SOURCE_DIR}/src/event1.cc)
 
-target_link_libraries(NuWroEvent_lib PRIVATE ROOT::RIO)
-target_include_directories(NuWroEvent_lib PRIVATE 
-  $<BUILD_INTERFACE:${NuWro_SOURCE_DIR}/src>)
-
-#If we want this to work properly we do need to ship some nuwro headers...
-set_target_properties(NuWroEvent_lib PROPERTIES 
-  LIBRARY_OUTPUT_NAME "NuWroEvent")
-
-add_library(nuwroconv STATIC nuwroconv.cxx)
-
-target_link_libraries(nuwroconv PUBLIC NuWroEvent_lib NuHepMC::CPPUtils_static ROOT::Tree ROOT::RIO)
+target_link_libraries(nuwroconv PUBLIC NuHepMC::CPPUtils ROOT::Tree ROOT::RIO)
 target_include_directories(nuwroconv PUBLIC 
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${NuWro_SOURCE_DIR}/src>)
+target_include_directories(nuwroconv PUBLIC 
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_definitions(nuwroconv PRIVATE NUWROCONV_DEBUG)
@@ -29,7 +20,7 @@ target_compile_definitions(nuwroconv PRIVATE
   PROJECT_VERSION_STR="${PROJECT_VERSION}")
 
 set_target_properties(nuwroconv PROPERTIES 
-  PUBLIC_HEADER nuwroconv.h)
+  PUBLIC_HEADER "nuwroconv.h;${NuWro_SOURCE_DIR}/src/event1.h")
 
 #If we build static then these are expected to be next to the binary
 install(FILES 
@@ -37,7 +28,7 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/libNuWroEvent_rdict.pcm 
   DESTINATION bin)
 
-install(TARGETS nuwroconv NuWroEvent_lib
+install(TARGETS nuwroconv
     EXPORT nuwroconv-targets
     LIBRARY DESTINATION lib 
     ARCHIVE DESTINATION lib 
