@@ -11,6 +11,8 @@
 
 #include <utility>
 
+namespace nuwroconv {
+
 int GetEC1Channel(flags const &flag) {
   // primary vertex flags
   //  bool qel;        ///< (quasi) elastic       (qel == dyn/2==0)
@@ -313,3 +315,5 @@ HepMC3::GenEvent ToGenEvent(event &ev,
 
   return evt;
 }
+
+} // namespace nuwroconv

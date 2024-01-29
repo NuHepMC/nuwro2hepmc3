@@ -8,6 +8,8 @@
 
 #include <iostream>
 
+using namespace nuwroconv;
+
 std::vector<std::string> files_to_read;
 std::string file_to_write;
 
