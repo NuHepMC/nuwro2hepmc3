@@ -26,7 +26,7 @@ set_target_properties(nuwroconv PROPERTIES
 install(FILES 
     ${CMAKE_CURRENT_BINARY_DIR}/libNuWroEvent.rootmap 
     ${CMAKE_CURRENT_BINARY_DIR}/libNuWroEvent_rdict.pcm 
-  DESTINATION bin)
+  DESTINATION lib)
 
 install(TARGETS nuwroconv
     EXPORT nuwroconv-targets
