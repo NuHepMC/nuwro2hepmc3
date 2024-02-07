@@ -7,8 +7,7 @@ add_library(nuwroconv SHARED nuwroconv.cxx NuWroEvent.cxx ${NuWro_SOURCE_DIR}/sr
 
 target_link_libraries(nuwroconv PUBLIC NuHepMC::CPPUtils ROOT::Tree ROOT::RIO)
 target_include_directories(nuwroconv PUBLIC 
-  $<BUILD_INTERFACE:${NuWro_SOURCE_DIR}/src>)
-target_include_directories(nuwroconv PUBLIC 
+  $<BUILD_INTERFACE:${NuWro_SOURCE_DIR}/src>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -22,7 +21,6 @@ target_compile_definitions(nuwroconv PRIVATE
 set_target_properties(nuwroconv PROPERTIES 
   PUBLIC_HEADER "nuwroconv.h;${NuWro_SOURCE_DIR}/src/event1.h")
 
-#If we build static then these are expected to be next to the binary
 install(FILES 
     ${CMAKE_CURRENT_BINARY_DIR}/libNuWroEvent.rootmap 
     ${CMAKE_CURRENT_BINARY_DIR}/libNuWroEvent_rdict.pcm 
