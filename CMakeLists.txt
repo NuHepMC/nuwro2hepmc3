@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 find_program(CMAKE_C_COMPILER NAMES $ENV{CC} gcc PATHS ENV PATH NO_DEFAULT_PATH)
 find_program(CMAKE_CXX_COMPILER NAMES $ENV{CXX} g++ PATHS ENV PATH NO_DEFAULT_PATH)
 
-project(nuwro2hepmc3 VERSION 0.1)
+project(nuwroconv VERSION 0.9)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -67,3 +67,27 @@ CPMAddPackage(
 
 add_subdirectory(src)
 add_subdirectory(app)
+
+install(EXPORT nuwroconv-targets
+  FILE nuwroconvConfig.cmake
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake/nuwroconv
+)
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/Templates/nuwroconvConfig.cmake.in 
+  ${CMAKE_BINARY_DIR}/nuwroconvConfig.cmake
+  INSTALL_DESTINATION 
+    /this/is/ignored/for/some/reason/thanks/kitware
+  NO_SET_AND_CHECK_MACRO
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+
+write_basic_package_version_file(
+  ${CMAKE_BINARY_DIR}/nuwroconvConfigVersion.cmake
+  VERSION ${nuwroconv_VERSION}
+  COMPATIBILITY AnyNewerVersion)
+
+install(FILES 
+    ${CMAKE_BINARY_DIR}/nuwroconvConfig.cmake 
+    ${CMAKE_BINARY_DIR}/nuwroconvConfigVersion.cmake 
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake/nuwroconv)

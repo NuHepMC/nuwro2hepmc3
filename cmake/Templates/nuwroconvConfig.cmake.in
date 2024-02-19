@@ -1,0 +1,52 @@
+@PACKAGE_INIT@
+
+if(TARGET nuwroconv)
+  set(nuwroconv_FOUND TRUE)
+  return()
+endif()
+
+set(nuwroconv_VERSION @PROJECT_VERSION@)
+set(nuwroconv_CXX_STANDARD 17)
+
+if(NOT TARGET NuHepMC::CPPUtils)
+  find_package(NuHepMC_CPPUtils REQUIRED)
+endif()
+
+if(NOT TARGET ROOT::RIO)
+  find_package(ROOT 6 REQUIRED)
+endif()
+
+set(nuwroconv_FOUND TRUE)
+include(${CMAKE_CURRENT_LIST_DIR}/nuwroconvTargets.cmake)
+
+if(NOT TARGET nuwroconv)
+  set(nuwroconv_FOUND FALSE)
+  return()
+endif()
+
+get_filename_component(nuwroconv_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+message(STATUS "Found nuwroconv Version: ${nuwroconv_VERSION} in \"${nuwroconv_CMAKE_DIR}\"")
+
+find_path(nuwroconv_INCLUDE_DIR
+  NAMES nuwroconv.h
+  PATHS ${nuwroconv_CMAKE_DIR}/../../../include/
+)
+
+find_path(nuwroconv_LIB_DIR
+  NAMES libnuwroconv.so libnuwroconv.dylib
+  PATHS ${nuwroconv_CMAKE_DIR}/../../
+)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(nuwroconv
+    REQUIRED_VARS 
+      nuwroconv_INCLUDE_DIR 
+      nuwroconv_LIB_DIR
+    VERSION_VAR 
+      nuwroconv_VERSION
+)
+
+message(STATUS "Found nuwroconv Version: ${nuwroconv_VERSION} in \"${nuwroconv_CMAKE_DIR}\"")
+message(STATUS "    nuwroconv_INCLUDE_DIR: ${nuwroconv_INCLUDE_DIR}")
+message(STATUS "    nuwroconv_LIB_DIR: ${nuwroconv_LIB_DIR}")
+
