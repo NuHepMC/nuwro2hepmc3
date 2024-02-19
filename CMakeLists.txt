@@ -69,7 +69,7 @@ add_subdirectory(src)
 add_subdirectory(app)
 
 install(EXPORT nuwroconv-targets
-  FILE nuwroconvConfig.cmake
+  FILE nuwroconvTargets.cmake
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake/nuwroconv
 )
 
