@@ -77,7 +77,10 @@ if(NOT NuWro_FOUND)
 
   add_library(nuwro_event1 SHARED NuWroEvent.cxx ${NuWro_SOURCE_DIR}/src/event1.cc)
 
-  target_include_directories(nuwro_event1 PUBLIC ${NuWro_SOURCE_DIR}/src)
+  target_include_directories(nuwro_event1 PUBLIC 
+    $<BUILD_INTERFACE:${NuWro_SOURCE_DIR}/src>
+    $<INSTALL_INTERFACE:include>)
+
   target_link_libraries(nuwro_event1 PUBLIC ROOT::Tree ROOT::RIO)
 
   FILE(GLOB NUWROHEADERS "${NuWro_SOURCE_DIR}/src/*.h")
