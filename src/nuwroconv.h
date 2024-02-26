@@ -2,7 +2,11 @@
 
 #include "HepMC3/GenEvent.h"
 
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wsign-compare"
 #include "event1.h"
+#pragma GCC diagnostic pop
 
 namespace nuwroconv {
 
