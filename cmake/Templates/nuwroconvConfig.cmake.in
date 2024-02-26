@@ -17,6 +17,7 @@ if(NOT TARGET ROOT::RIO)
 endif()
 
 get_filename_component(nuwroconv_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+LIST(APPEND CMAKE_MODULE_PATH ${nuwroconv_CMAKE_DIR})
 
 if(@nuwroconv_EXTERNAL_NuWro@)
   find_package(NuWro REQUIRED)
