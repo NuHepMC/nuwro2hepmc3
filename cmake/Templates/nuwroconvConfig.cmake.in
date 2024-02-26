@@ -16,6 +16,12 @@ if(NOT TARGET ROOT::RIO)
   find_package(ROOT 6 REQUIRED)
 endif()
 
+get_filename_component(nuwroconv_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+
+if(@nuwroconv_EXTERNAL_NuWro@)
+  find_package(NuWro REQUIRED)
+endif()
+
 set(nuwroconv_FOUND TRUE)
 include(${CMAKE_CURRENT_LIST_DIR}/nuwroconvTargets.cmake)
 
@@ -24,7 +30,6 @@ if(NOT TARGET nuwroconv)
   return()
 endif()
 
-get_filename_component(nuwroconv_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 message(STATUS "Found nuwroconv Version: ${nuwroconv_VERSION} in \"${nuwroconv_CMAKE_DIR}\"")
 
 find_path(nuwroconv_INCLUDE_DIR

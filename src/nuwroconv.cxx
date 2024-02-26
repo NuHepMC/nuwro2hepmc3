@@ -30,7 +30,7 @@ int GetEC1Channel(flags const &flag) {
 
   // bool res_delta;  ///< true if RES pion comes from Delta
 
-  int anti = flag.anty ? -1 : 1;
+  // int anti = flag.anty ? -1 : 1;
   int nc = flag.nc ? 50 : 0;
 
   if (flag.qel) {

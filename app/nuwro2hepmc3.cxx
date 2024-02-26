@@ -77,7 +77,7 @@ int main(int argc, char const *argv[]) {
   chin.GetEntry(0);
 
   event *ev = nullptr;
-  auto branch_status = chin.SetBranchAddress("e", &ev);
+  chin.SetBranchAddress("e", &ev);
 
   chin.GetEntry(0);
 

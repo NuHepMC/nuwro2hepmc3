@@ -57,13 +57,46 @@ CPMFindPackage(
     OPTIONS "BUILTIN_HEPMC3 ON"
 )
 
-CPMAddPackage(
-    NAME NuWro
-    VERSION 21.09.02
-    GIT_REPOSITORY "https://github.com/NuWro/nuwro.git"
-    GIT_TAG nuwro_21.09.2
-    DOWNLOAD_ONLY ON
-)
+find_package(NuWro QUIET)
+SET(nuwroconv_EXTERNAL_NuWro TRUE)
+if(NOT NuWro_FOUND)
+  SET(nuwroconv_EXTERNAL_NuWro FALSE)
+
+  CPMAddPackage(
+      NAME NuWro
+      VERSION 21.09.02
+      GIT_REPOSITORY "https://github.com/NuWro/nuwro.git"
+      GIT_TAG nuwro_21.09.2
+      DOWNLOAD_ONLY ON
+  )
+
+  ROOT_GENERATE_DICTIONARY(NuWroEvent
+              ${NuWro_SOURCE_DIR}/src/event1.h
+              LINKDEF ${NuWro_SOURCE_DIR}/src/event1LinkDef.h
+              OPTIONS -p)
+
+  add_library(nuwro_event1 SHARED NuWroEvent.cxx ${NuWro_SOURCE_DIR}/src/event1.cc)
+
+  target_include_directories(nuwro_event1 PUBLIC ${NuWro_SOURCE_DIR}/src)
+  target_link_libraries(nuwro_event1 PUBLIC ROOT::Tree ROOT::RIO)
+
+  FILE(GLOB NUWROHEADERS "${NuWro_SOURCE_DIR}/src/*.h")
+  set_target_properties(nuwro_event1 PROPERTIES PUBLIC_HEADER "${NUWROHEADERS}")
+
+  install(TARGETS nuwro_event1
+      EXPORT nuwroconv-targets
+      LIBRARY DESTINATION lib 
+      ARCHIVE DESTINATION lib 
+      PUBLIC_HEADER DESTINATION include)
+
+  install(FILES 
+      ${CMAKE_CURRENT_BINARY_DIR}/libNuWroEvent.rootmap 
+      ${CMAKE_CURRENT_BINARY_DIR}/libNuWroEvent_rdict.pcm 
+    DESTINATION lib)
+
+  add_library(NuWro::All ALIAS nuwro_event1)
+
+endif()
 
 add_subdirectory(src)
 add_subdirectory(app)
@@ -90,4 +123,5 @@ write_basic_package_version_file(
 install(FILES 
     ${CMAKE_BINARY_DIR}/nuwroconvConfig.cmake 
     ${CMAKE_BINARY_DIR}/nuwroconvConfigVersion.cmake 
+    ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules/FindNuWro.cmake
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake/nuwroconv)
