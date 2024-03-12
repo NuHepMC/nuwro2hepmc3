@@ -170,15 +170,16 @@ BuildRunInfo(int nevents, double flux_averaged_total_cross_section,
   return run_info;
 }
 
-HepMC3::GenEvent ToGenEvent(event &ev,
-                            std::shared_ptr<HepMC3::GenRunInfo> gri) {
+std::shared_ptr<HepMC3::GenEvent>
+ToGenEvent(event &ev, std::shared_ptr<HepMC3::GenRunInfo> gri) {
 
 #ifdef NUWROCONV_DEBUG
   std::cout << ">>>>>>>>>>>>>>>" << std::endl;
 #endif
 
-  HepMC3::GenEvent evt(HepMC3::Units::MEV, HepMC3::Units::CM);
-  evt.set_run_info(gri);
+  auto evt =
+      std::make_shared<HepMC3::GenEvent>(HepMC3::Units::MEV, HepMC3::Units::CM);
+  evt->set_run_info(gri);
 
   HepMC3::GenVertexPtr IAVertex =
       std::make_shared<HepMC3::GenVertex>(HepMC3::FourVector{});
@@ -292,21 +293,21 @@ HepMC3::GenEvent ToGenEvent(event &ev,
     fsivertex->add_particle_out(part);
   }
 
-  evt.add_vertex(IAVertex);
-  evt.add_vertex(primvertex);
-  evt.add_vertex(fsivertex);
+  evt->add_vertex(IAVertex);
+  evt->add_vertex(primvertex);
+  evt->add_vertex(fsivertex);
 
   NuHepMC::PC2::SetRemnantParticleNumber(residual_nucleus_internal,
                                          res_nuclear_PDG);
 
   // E.C.1
-  evt.weight("CV") = 1;
+  evt->weight("CV") = 1;
 
   // E.R.3
-  NuHepMC::ER3::SetProcessID(evt, GetEC1Channel(ev.flag));
+  NuHepMC::ER3::SetProcessID(*evt, GetEC1Channel(ev.flag));
 
   // E.R.5
-  NuHepMC::ER5::SetLabPosition(evt, std::vector<double>{0, 0, 0, 0});
+  NuHepMC::ER5::SetLabPosition(*evt, std::vector<double>{0, 0, 0, 0});
 
 #ifdef NUWROCONV_DEBUG
   std::cout << "      ProcId: " << GetEC1Channel(ev.flag) << std::endl;
