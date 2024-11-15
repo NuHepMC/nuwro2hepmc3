@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 find_program(CMAKE_C_COMPILER NAMES $ENV{CC} gcc PATHS ENV PATH NO_DEFAULT_PATH)
 find_program(CMAKE_CXX_COMPILER NAMES $ENV{CXX} g++ PATHS ENV PATH NO_DEFAULT_PATH)
 
-project(nuwroconv VERSION 0.9)
+project(nuwroconv VERSION 0.9.1)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -29,8 +29,9 @@ find_package(ROOT 6 REQUIRED)
 include(get_cpm)
 CPMFindPackage(
     NAME NuHepMC_CPPUtils
+    VERSION 0.9.3
     GIT_REPOSITORY "https://github.com/NuHepMC/cpputils.git"
-    GIT_TAG v1-RC1
+    GIT_TAG v1-RC4
     OPTIONS "BUILTIN_HEPMC3 ON"
 )
 
