@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 find_program(CMAKE_C_COMPILER NAMES $ENV{CC} gcc PATHS ENV PATH NO_DEFAULT_PATH)
 find_program(CMAKE_CXX_COMPILER NAMES $ENV{CXX} g++ PATHS ENV PATH NO_DEFAULT_PATH)
 
-project(nuwroconv VERSION 0.9.3)
+project(nuwroconv VERSION 0.9.4)
 
 set(CMAKE_CXX_STANDARD 17)
 cmake_policy(SET CMP0095 NEW)
@@ -27,13 +27,22 @@ LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/Modules)
 
 find_package(ROOT 6 REQUIRED)
 
+find_package(Protobuf 2.4 QUIET)
+find_package(HepMC3 3.2.6 QUIET)
+
+set(nuwroconv_BUILTIN_HEPMC3 ON)
+if(HepMC3_FOUND)
+  set(nuwroconv_BUILTIN_HEPMC3 OFF)
+endif()
+
 include(get_cpm)
+
 CPMFindPackage(
     NAME NuHepMC_CPPUtils
     VERSION 0.9.6
     GIT_REPOSITORY "https://github.com/NuHepMC/cpputils.git"
     GIT_TAG v1-RC8
-    OPTIONS "BUILTIN_HEPMC3 ON"
+    OPTIONS "NuHepMC_CPPUtils_BUILTIN_HEPMC3 ${nuwroconv_BUILTIN_HEPMC3}"
 )
 
 find_package(NuWro QUIET)
