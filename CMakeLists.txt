@@ -6,6 +6,7 @@ find_program(CMAKE_CXX_COMPILER NAMES $ENV{CXX} g++ PATHS ENV PATH NO_DEFAULT_PA
 project(nuwroconv VERSION 0.9.3)
 
 set(CMAKE_CXX_STANDARD 17)
+cmake_policy(SET CMP0095 NEW)
 
 #Changes default install path to be a subdirectory of the build dir.
 #Can set build dir at configure time with -DCMAKE_INSTALL_PREFIX=/install/path
