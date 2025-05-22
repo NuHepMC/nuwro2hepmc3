@@ -108,7 +108,7 @@ BuildRunInfo(int nevents, double flux_averaged_total_cross_section,
       {700, {"CC lep", "neutrino-lepton"}},
       {750, {"NC lep", "neutrino-lepton"}},
   };
-  NuHepMC::GR4::WriteProcessIDDefinitions(run_info,
+  NuHepMC::GR8::WriteProcessIDDefinitions(run_info,
                                           ChannelNameIndexModeMapping);
 
   NuHepMC::StatusCodeDescriptors VertexStatuses = {
@@ -122,7 +122,7 @@ BuildRunInfo(int nevents, double flux_averaged_total_cross_section,
         "single target nucleon from the target nucleus ground state."}},
   };
 
-  NuHepMC::GR5::WriteVertexStatusIDDefinitions(run_info, VertexStatuses);
+  NuHepMC::GR9::WriteVertexStatusIDDefinitions(run_info, VertexStatuses);
 
   NuHepMC::StatusCodeDescriptors ParticleStatuses = {
       {NuHepMC::ParticleStatus::UndecayedPhysical,
@@ -140,29 +140,23 @@ BuildRunInfo(int nevents, double flux_averaged_total_cross_section,
       {NuHepMC::ParticleStatus::StruckNucleon,
        {"StruckNucleon", "The nucleon involved in the hard scatter"}},
   };
-  NuHepMC::GR6::WriteParticleStatusIDDefinitions(run_info, ParticleStatuses);
+  NuHepMC::GR10::WriteParticleStatusIDDefinitions(run_info, ParticleStatuses);
 
   // G.R.7 Event Weights
   NuHepMC::GR7::SetWeightNames(run_info, {
                                              "CV",
                                          });
 
-  // G.C.1 Signalling Followed Conventions
-  NuHepMC::GC1::SetConventions(run_info, {
-                                             "G.C.1",
+  // G.R.4 Signalling Followed Conventions
+  NuHepMC::GR4::SetConventions(run_info, {
                                              "G.C.2",
-                                             "G.C.5",
-                                             "G.C.4",
                                              "E.C.1",
                                          });
 
-  // G.C.2 File Exposure (Standalone)
-  NuHepMC::GC2::SetExposureNEvents(run_info, nevents);
+  NuHepMC::GR6::SetCrossSectionUnits(run_info, "pb", "PerNucleon");
 
-  NuHepMC::GC4::SetCrossSectionUnits(run_info, "pb", "PerTargetNucleon");
-
-  // G.C.5 Flux-averaged Total Cross Section
-  NuHepMC::GC5::SetFluxAveragedTotalXSec(run_info,
+  // G.C.2 Flux-averaged Total Cross Section
+  NuHepMC::GC2::SetFluxAveragedTotalXSec(run_info,
                                          flux_averaged_total_cross_section *
                                              NuHepMC::CrossSection::Units::cm2);
 
@@ -297,8 +291,9 @@ ToGenEvent(event &ev, std::shared_ptr<HepMC3::GenRunInfo> gri) {
   evt->add_vertex(primvertex);
   evt->add_vertex(fsivertex);
 
-  NuHepMC::PC2::SetRemnantParticleNumber(residual_nucleus_internal,
-                                         res_nuclear_PDG);
+  NuHepMC::PC2::SetRemnantNucleusParticleNumber(
+      residual_nucleus_internal, (res_nuclear_PDG / 10) % 1000,
+      (res_nuclear_PDG / 10000) % 1000);
 
   // E.C.1
   evt->weight("CV") = 1;

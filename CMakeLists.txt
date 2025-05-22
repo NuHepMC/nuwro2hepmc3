@@ -39,9 +39,9 @@ include(get_cpm)
 
 CPMFindPackage(
     NAME NuHepMC_CPPUtils
-    VERSION 0.9.6
+    VERSION 0.9.8
     GIT_REPOSITORY "https://github.com/NuHepMC/cpputils.git"
-    GIT_TAG v1-RC8
+    GIT_TAG v1-RC11
     OPTIONS "NuHepMC_CPPUtils_BUILTIN_HEPMC3 ${nuwroconv_BUILTIN_HEPMC3}"
 )
 
