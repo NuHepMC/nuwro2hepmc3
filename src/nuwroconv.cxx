@@ -2,6 +2,7 @@
 
 #include "HepMC3/GenParticle.h"
 #include "HepMC3/GenVertex.h"
+#include "HepMC3/Print.h"
 
 #include "NuHepMC/Constants.hxx"
 #include "NuHepMC/UnitsUtils.hxx"
@@ -194,6 +195,10 @@ ToGenEvent(event &ev, std::shared_ptr<HepMC3::GenRunInfo> gri) {
 
   int res_nuclear_PDG = 1000000000 + ev.pr * 10000 + (ev.pr + ev.nr) * 10;
 
+  if (ev.pr < 0) {
+    res_nuclear_PDG = nuclear_PDG;
+  }
+
   HepMC3::GenParticlePtr residual_nucleus_internal =
       std::make_shared<HepMC3::GenParticle>(
           HepMC3::FourVector{0, 0, 0, 0},
@@ -291,9 +296,11 @@ ToGenEvent(event &ev, std::shared_ptr<HepMC3::GenRunInfo> gri) {
   evt->add_vertex(primvertex);
   evt->add_vertex(fsivertex);
 
-  NuHepMC::PC2::SetRemnantNucleusParticleNumber(
-      residual_nucleus_internal, (res_nuclear_PDG / 10) % 1000,
-      (res_nuclear_PDG / 10000) % 1000);
+  if (res_nuclear_PDG) {
+    NuHepMC::PC2::SetRemnantNucleusParticleNumber(
+        residual_nucleus_internal, (res_nuclear_PDG / 10000) % 1000,
+        (res_nuclear_PDG / 10) % 1000);
+  }
 
   // E.C.1
   evt->weight("CV") = 1;
